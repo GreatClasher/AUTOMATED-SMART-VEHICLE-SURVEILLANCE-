@@ -286,39 +286,100 @@ class OCR:
 			plate = plate + self.label_image(self.convert_tensor(img, imageSizeOuput))
 		
 		return plate, len(plate)
+
+class VehicleSpeedTracker:
+    def __init__(self, video_path):
+        self.cap = cv2.VideoCapture(video_path)
+        self.fgbg = cv2.createBackgroundSubtractorMOG2()
+        self.previous_frame = None
+        self.previous_time = time.time()
+
+    def calculate_speed(self, x):
+        if self.previous_frame is not None:
+            distance_moved = x - self.previous_frame[0]
+            time_elapsed = time.time() - self.previous_time
+            
+            # Assuming the distance is in pixels and time is in seconds
+            speed_pixels_per_second = distance_moved / time_elapsed
+            
+            # Convert speed to a real-world value (e.g., meters per second)
+            pixels_to_meters_conversion_factor = 0.1  # Adjust this value based on your scenario
+            speed_meters_per_second = speed_pixels_per_second * pixels_to_meters_conversion_factor
+            
+            return speed_meters_per_second
+        else:
+            return 0
+
+    def track_speed(self):
+        while self.cap.isOpened():
+            ret, frame = self.cap.read()
+            
+            if not ret:
+                break
+            
+            fgmask = self.fgbg.apply(frame)
+            contours, _ = cv2.findContours(fgmask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            
+            for contour in contours:
+                if cv2.contourArea(contour) < 100:
+                    continue
+                
+                x, y, w, h = cv2.boundingRect(contour)
+                cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+                
+                speed = self.calculate_speed(x)
+                print(f"Vehicle speed: {speed} m/s")
+                
+                self.previous_frame = (x, y)
+                self.previous_time = time.time()
+            
+            cv2.imshow('Speed Tracking', frame)
+            
+            if cv2.waitKey(30) & 0xFF == ord('q'):
+                break
+
+        # self.cap.release()
+        # cv2.destroyAllWindows()
+
 if __name__ == "__main__":
-	
-	findPlate = PlateFinder(minPlateArea=4100, 
-								maxPlateArea=15000)
-	model = OCR(modelFile="model/binary_128_0.50_ver3.pb",
-							labelFile="model/binary_128_0.50_labels_ver2.txt")
+    findPlate = PlateFinder(minPlateArea=4100, maxPlateArea=15000)
+    model = OCR(modelFile="model/binary_128_0.50_ver3.pb",
+                labelFile="model/binary_128_0.50_labels_ver2.txt")
 
-	cap = cv2.VideoCapture('test.MOV')
-	
-	while (cap.isOpened()):
-		ret, img = cap.read()
-		
-		if ret == True:
-			cv2.imshow('original video', img)
-			
-			if cv2.waitKey(25) & 0xFF == ord('q'):
-				break
-			
-			possible_plates = findPlate.find_possible_plates(img)
-			if possible_plates is not None:
-				
-				for i, p in enumerate(possible_plates):
-					chars_on_plate = findPlate.char_on_plate[i]
-					recognized_plate, _ = model.label_image_list(
-							chars_on_plate, imageSizeOuput = 128)
+    cap = cv2.VideoCapture('test.MOV')
 
-					print(recognized_plate)
-					cv2.imshow('plate', p)
-					
-					if cv2.waitKey(25) & 0xFF == ord('q'):
-						break
-		else:
-			break
-			
-	cap.release()
-	cv2.destroyAllWindows()
+    # Create an instance of VehicleSpeedTracker with the same video source
+    speed_tracker = VehicleSpeedTracker(video_path='test.MOV')
+
+    while cap.isOpened():
+        ret, img = cap.read()
+
+        if ret:
+            cv2.imshow('original video', img)
+
+            if cv2.waitKey(25) & 0xFF == ord('q'):
+                break
+
+            # Perform license plate recognition
+            possible_plates = findPlate.find_possible_plates(img)
+
+            if possible_plates is not None:
+                for i, p in enumerate(possible_plates):
+                    chars_on_plate = findPlate.char_on_plate[i]
+                    recognized_plate, _ = model.label_image_list(
+                        chars_on_plate, imageSizeOuput=128)
+
+                    print(recognized_plate)
+                    cv2.imshow('plate', p)
+
+                    # Track and display vehicle speed
+                    speed_tracker.track_speed()
+
+                    if cv2.waitKey(25) & 0xFF == ord('q'):
+                        break
+        else:
+            break
+
+    cap.release()
+    cv2.destroyAllWindows()
+
