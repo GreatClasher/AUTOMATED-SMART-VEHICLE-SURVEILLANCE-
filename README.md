@@ -17,7 +17,7 @@ This repository contains a Python script for License Plate Recognition (LPR) usi
 
 1. **Clone the Repository:**
    ```bash
-   git clone https://github.com/your-username/satellite-image-processing.git
-   cd satellite-image-processing
+   git clone https://github.com/GreatClasher/AUTOMATED-SMART-VEHICLE-SURVEILLANCE.git
+   cd AUTOMATED-SMART-VEHICLE-SURVEILLANCE
 # Run
 python app.py
