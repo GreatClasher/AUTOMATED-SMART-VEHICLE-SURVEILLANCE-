@@ -2,3 +2,22 @@
 
 
 # AUTOMATED-SMART-VEHICLE-SURVEILLANCE
+This repository contains a Python script for License Plate Recognition (LPR) using satellite image processing. The system uses OpenCV, scikit-image, and TensorFlow for character segmentation and recognition.
+
+## Features
+
+- **Character Segmentation:** Utilizes adaptive thresholding and contour analysis to identify and segment characters on license plates.
+- **Transfer Learning:** Implements transfer learning with U-Net and ResNet34 models for improved accuracy.
+- **Plate Validation:** Validates license plates based on aspect ratio, solidity, and height ratio.
+- **OCR (Optical Character Recognition):** Uses a pre-trained OCR model to recognize characters on segmented plates.
+- **Speed Tracking:** Incorporates speed tracking functionality to monitor the speed of vehicles.
+- **Email Notification:** Sends email notifications in case of overspeed events.
+
+## Usage
+
+1. **Clone the Repository:**
+   ```bash
+   git clone https://github.com/your-username/satellite-image-processing.git
+   cd satellite-image-processing
+# Run
+python app.py
